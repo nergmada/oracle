@@ -1,0 +1,68 @@
+box: node
+services:
+    - id: mongo
+build:
+  steps:
+    - npm-install
+    - script:
+        name: run lint
+        code: |
+            echo "running lint"
+            npm run lint
+            echo "linting finished"
+    - script: 
+        name: set .env file
+        code: |
+            echo "creating environment variables file (.env)"
+            printenv > .env
+            echo "environment variables created"
+    - script:
+        name: run build
+        code: |
+            echo "running build"
+            npm run build
+            echo "build finished"
+deploy:
+    steps:
+        - npm-install
+        - script: 
+            name: set .env file
+            code: |
+                echo "creating environment variables file (.env)"
+                printenv > .env
+                echo "environment variables created"
+        - internal/docker-push: 
+            username: $DOCKER_USERNAME
+            password: $DOCKER_PASSWORD
+            repository: $DOCKER_USERNAME/oracle
+            registry: https://hub.docker.com/r
+            ports: "3000"
+            cmd: /bin/bash -c 'cd /pipeline/source/build && ls && node index.js'
+        - add-ssh-key:
+            keyname: docker-do
+        - add-to-known_hosts:
+            hostname: 178.62.0.24
+        - script:
+            name: login to docker
+            code: ssh root@178.62.0.24 docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+        - script:
+            name: pull latest image
+            code: ssh root@178.62.0.24 docker pull $DOCKER_USERNAME/oracle:latest
+        - script:
+            name: stop running container
+            code: ssh root@178.62.0.24 docker stop oracle || echo ‘failed to stop running container’
+        - script:
+            name: remove stopped container
+            code: ssh root@178.62.0.24 docker rm oracle || echo ‘failed to remove stopped container’
+        - script:
+            name: remove image behind stopped container
+            code: ssh root@178.62.0.24 docker rmi $DOCKER_USERNAME/oracle:current || echo ‘failed to remove image behind stopped container’
+        - script:
+            name: tag newly pulled image
+            code: ssh root@178.62.0.24 docker tag $DOCKER_USERNAME/oracle:latest $DOCKER_USERNAME/oracle:current
+        - script:
+            name: run new container
+            code: ssh root@178.62.0.24 docker run -d -p 3000:80 --name oracle $DOCKER_USERNAME/oracle:current
+        - script:
+            name: logout of docker
+            code: ssh root@178.62.0.24 docker logout
