@@ -39,7 +39,7 @@ deploy:
             ports: "3000"
             cmd: /bin/bash -c 'cd /pipeline/source/build && ls && node index.js'
         - add-ssh-key:
-            keyname: docker-do
+            keyname: docker_do
         - add-to-known_hosts:
             hostname: 178.62.0.24
         - script:
