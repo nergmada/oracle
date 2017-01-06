@@ -1,0 +1,12 @@
+{
+  "presets": ["react", "es2015", "stage-0"],
+  "plugins": [
+    [
+      "module-alias",
+      [
+        { "src": "./app", "expose": "app" },
+        { "src": "./server", "expose": "server" }
+      ]
+    ]
+  ]
+}
