@@ -14,7 +14,11 @@ var serverConfig = {
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
     filename: 'index.js',
+    libraryTarget: 'commonjs',
   },
+  externals: [
+    /^(?!\.|\/).+/i,
+  ],
   module: {
     loaders: [{
       test: /\.js$/, // Transform all .js files required somewhere with Babel
